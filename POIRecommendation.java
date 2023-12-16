@@ -20,7 +20,8 @@ public class POIRecommendation {
     public static class BusinessMap extends Mapper<LongWritable, Text, Text, Text> {
         private Text outputValue = new Text();
         private Text outputKey = new Text();
-        private String[] userHistory = {"34.4266787,-119.7111968,1,1,0,0,5","10,10,0,0,0,0,5"};
+        private String[] userHistory = {"34.4266787,-119.7111968,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5",
+        		"10,10,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5"};
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -29,22 +30,25 @@ public class POIRecommendation {
                 JSONParser parser = new JSONParser();
                 JSONObject jsonObject = (JSONObject) parser.parse(new StringReader(value.toString()));
 
-                // Extract relevant fields
-                double latitude = Double.parseDouble(jsonObject.get("latitude").toString());
-                double longitude = Double.parseDouble(jsonObject.get("longitude").toString());
-                String categories = jsonObject.get("categories").toString();
-                String stars = jsonObject.get("stars").toString();
-                String business_id = jsonObject.get("business_id").toString();
+                if (jsonObject.get("latitude") != null && jsonObject.get("longitude") != null && jsonObject.get("categories") != null && jsonObject.get("stars") != null) {
+                	// Extract relevant fields
+                    double latitude = Double.parseDouble(jsonObject.get("latitude").toString());
+                    double longitude = Double.parseDouble(jsonObject.get("longitude").toString());
+                    String categories = jsonObject.get("categories").toString();
+                    String stars = jsonObject.get("stars").toString();
+                    String business_id = jsonObject.get("business_id").toString();
 
-                // Convert categories to one-hot encoding
-                String oneHotEncoding = getOneHotEncoding(categories);
+                    // Convert categories to one-hot encoding
+                    String oneHotEncoding = getOneHotEncoding(categories);
 
-                // Emit the stars and vector as output
-                for (String history:userHistory){
-                    outputKey.set(history);
-                    outputValue.set(business_id + "," + latitude + "," + longitude + "," + oneHotEncoding + "," + stars);
-                    context.write(outputKey, outputValue);
+                    // Emit the stars and vector as output
+                    for (String history:userHistory){
+                        outputKey.set(history);
+                        outputValue.set(business_id + "," + latitude + "," + longitude + "," + oneHotEncoding + "," + stars);
+                        context.write(outputKey, outputValue);
+                    }
                 }
+                
             } catch (Exception e) {
                 // Handle parsing errors or other exceptions
                 e.printStackTrace();
@@ -139,7 +143,7 @@ public class POIRecommendation {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
-        FileInputFormat.addInputPath(job, new Path("/input/business.json"));  // Input path for business.json
+        FileInputFormat.addInputPath(job, new Path("/input/yelp_business.json"));  // Input path for business.json
         FileOutputFormat.setOutputPath(job, new Path("/output"));  // Output path
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
@@ -148,9 +152,9 @@ public class POIRecommendation {
 
 
     private static String getOneHotEncoding(String categories) {
-        // Implement one-hot encoding for relevant categories (Food, Italian, Shopping, Pets)
+        // Implement one-hot encoding for relevant categories
         String[] categoryArray = categories.split(", ");
-        boolean[] encoding = new boolean[4];
+        boolean[] encoding = new boolean[25];
 
         Arrays.fill(encoding, false);
 
@@ -168,6 +172,69 @@ public class POIRecommendation {
                 case "Pets":
                     encoding[3] = true;
                     break;
+                case "Printing Services":
+                	encoding[4] = true;
+                	break;
+                case "Local Services":
+                	encoding[5] = true;
+                	break;
+                case "Electronics":
+                	encoding[6] = true;
+                	break;
+                case "Furniture Stores":
+                	encoding[7] = true;
+                	break;
+                case "Restaurants":
+                	encoding[8] = true;
+                	break;
+                case "Bubble Tea":
+                	encoding[9] = true;
+                	break;
+                case "Bakeries":
+                	encoding[10] = true;
+                	break;
+                case "Fast Food":
+                	encoding[11] = true;
+                	break;
+                case "Sports Wear":
+                	encoding[12] = true;
+                	break;
+                case "Religious Organizations":
+                	encoding[13] = true;
+                	break;
+                case "Fashion":
+                	encoding[14] = true;
+                	break;
+                case "Breakfast & Brunch":
+                	encoding[15] = true;
+                	break;
+                case "Dentists":
+                	encoding[16] = true;
+                	break;
+                case "Health & Medical":
+                	encoding[17] = true;
+                	break;
+                case "Japanese":
+                	encoding[18] = true;
+                	break;
+                case "Automotive":
+                	encoding[19] = true;
+                	break;
+                case "Hotels & Travel":
+                	encoding[20] = true;
+                	break;
+                case "Korean":
+                	encoding[21] = true;
+                	break;
+                case "Bookstores":
+                	encoding[22] = true;
+                	break;
+                case "Bars":
+                	encoding[23] = true;
+                	break;
+                case "IT Services & Computer Repair":
+                	encoding[24] = true;
+                	break;
                 // Add more categories as needed
             }
         }
@@ -195,7 +262,7 @@ public class POIRecommendation {
         double norm1 = vectorNorm(vector1);
         double norm2 = vectorNorm(vector2);
 
-        // 计算sin similarity(negative)
+        // 计算cosine similarity(negative)
         return dotProduct / (norm1 * norm2);
     }
 
