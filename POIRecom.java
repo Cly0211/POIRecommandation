@@ -69,6 +69,16 @@ public class POIRecom {
         }
     }
 
+    private static JSONObject parseJsonString(String jsonString) {
+        try {
+            JSONParser parser = new JSONParser();
+            return (JSONObject) parser.parse(new StringReader(jsonString));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     private static String getOneHotEncoding(String categories) {
         // Implement one-hot encoding for relevant categories
         String[] categoryArray = categories.split(", ");
